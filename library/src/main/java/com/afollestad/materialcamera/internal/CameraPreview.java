@@ -6,6 +6,7 @@ import android.hardware.Camera;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import java.util.Collection;
 
 @SuppressWarnings("deprecation")
 @SuppressLint("ViewConstructor")
@@ -15,15 +16,20 @@ class CameraPreview extends SurfaceView implements SurfaceHolder.Callback {
 
     protected final SurfaceHolder mHolder;
     private final Camera mCamera;
-    private int mRatioWidth = 0;
-    private int mRatioHeight = 0;
-
-    public CameraPreview(Context context, Camera camera) {
+    private final Collection<Camera.Size> mSupportedPreviewSizes;
+    private Camera.Size mPreviewSize;
+    private boolean landscape;
+    public Camera.Size getmPreviewSize() {
+        return mPreviewSize;
+    }
+    public CameraPreview(Context context, Camera camera, boolean landscape) {
         super(context);
         mCamera = camera;
         mHolder = getHolder();
         mHolder.addCallback(this);
         mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+        mSupportedPreviewSizes=mCamera.getParameters().getSupportedPreviewSizes();
+        this.landscape=landscape;
     }
 
     @Override
@@ -50,43 +56,61 @@ class CameraPreview extends SurfaceView implements SurfaceHolder.Callback {
         } catch (Exception ignored) {
         }
         try {
-            mCamera.setPreviewDisplay(mHolder);
+            Camera.Parameters parameters = mCamera.getParameters();
+            parameters.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
+            mCamera.setParameters(parameters);
             mCamera.startPreview();
         } catch (Exception e) {
             Log.d(TAG, "Error starting camera preview: " + e.getMessage());
         }
     }
 
-    /**
-     * Sets the aspect ratio for this view. The size of the view will be measured based on the ratio
-     * calculated from the parameters. Note that the actual sizes of parameters don't matter, that
-     * is, calling setAspectRatio(2, 3) and setAspectRatio(4, 6) make the same result.
-     *
-     * @param width  Relative horizontal size
-     * @param height Relative vertical size
-     */
-    public void setAspectRatio(int width, int height) {
-        if (width < 0 || height < 0) {
-            throw new IllegalArgumentException("Size cannot be negative.");
-        }
-        mRatioWidth = width;
-        mRatioHeight = height;
-        requestLayout();
-    }
-
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        int width = MeasureSpec.getSize(widthMeasureSpec);
-        int height = MeasureSpec.getSize(heightMeasureSpec);
-        if (0 == mRatioWidth || 0 == mRatioHeight) {
-            setMeasuredDimension(width, height);
-        } else {
-            if (width < height * mRatioWidth / mRatioHeight) {
-                setMeasuredDimension(width, width * mRatioHeight / mRatioWidth);
+        final int width = MeasureSpec.getSize(widthMeasureSpec);
+        final int height = MeasureSpec.getSize(heightMeasureSpec);
+        setMeasuredDimension(width, height);
+
+        if (mSupportedPreviewSizes != null) {
+            if(landscape) {
+                //If it is landscape swap the width and height
+                mPreviewSize = getOptimalPreviewSize(mSupportedPreviewSizes, height, width);
             } else {
-                setMeasuredDimension(height * mRatioWidth / mRatioHeight, height);
+                mPreviewSize = getOptimalPreviewSize(mSupportedPreviewSizes, width, height);
             }
         }
     }
+
+    private Camera.Size getOptimalPreviewSize(Collection<Camera.Size> sizes, int w, int h) {
+        final double ASPECT_TOLERANCE = 0.1;
+        double targetRatio=(double)h / w;
+
+        if (sizes == null) return null;
+
+        Camera.Size optimalSize = null;
+        double minDiff = Double.MAX_VALUE;
+
+        int targetHeight = h;
+
+        for (Camera.Size size : sizes) {
+            double ratio = (double) size.width / size.height;
+            if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE) continue;
+            if (Math.abs(size.height - targetHeight) < minDiff) {
+                optimalSize = size;
+                minDiff = Math.abs(size.height - targetHeight);
+            }
+        }
+
+        if (optimalSize == null) {
+            minDiff = Double.MAX_VALUE;
+            for (Camera.Size size : sizes) {
+                if (Math.abs(size.height - targetHeight) < minDiff) {
+                    optimalSize = size;
+                    minDiff = Math.abs(size.height - targetHeight);
+                }
+            }
+        }
+        return optimalSize;
+    }
+
 }

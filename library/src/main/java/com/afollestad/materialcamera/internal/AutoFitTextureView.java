@@ -72,5 +72,4 @@ class AutoFitTextureView extends TextureView {
             }
         }
     }
-
 }

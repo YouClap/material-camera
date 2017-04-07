@@ -237,7 +237,6 @@ public class Camera2Fragment extends BaseCameraFragment implements View.OnClickL
                 case STATE_WAITING_LOCK: {
                     Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
                     if (afState == null) {
-                        captureStillPicture();
                     } else if (CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED == afState ||
                             CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED == afState) {
                         // CONTROL_AE_STATE can be null on some devices
@@ -290,6 +289,7 @@ public class Camera2Fragment extends BaseCameraFragment implements View.OnClickL
         }
 
     };
+    private boolean disableReset;
 
     public static Camera2Fragment newInstance() {
         Camera2Fragment fragment = new Camera2Fragment();
@@ -311,7 +311,6 @@ public class Camera2Fragment extends BaseCameraFragment implements View.OnClickL
         LOG(Camera2Fragment.class, "Couldn't find any suitable video size");
         return choices[choices.length - 1];
     }
-
 
     private static Size chooseOptimalSize(Size[] choices, int width, int height, Size aspectRatio) {
         // Collect the supported resolutions that are at least as big as the preview Surface
@@ -384,6 +383,16 @@ public class Camera2Fragment extends BaseCameraFragment implements View.OnClickL
     }
 
     @Override
+    protected void reset() {
+        stopBackgroundThread();
+        startBackgroundThread();
+        mCameraDevice.close();
+        if(!disableReset) {
+            openCamera();
+        }
+    }
+
+    @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         mTextureView = (AutoFitTextureView) view.findViewById(R.id.texture);
@@ -402,10 +411,9 @@ public class Camera2Fragment extends BaseCameraFragment implements View.OnClickL
     @Override
     public void onResume() {
         super.onResume();
+        disableReset =false;
         startBackgroundThread();
-        if (mTextureView.isAvailable()) {
-            openCamera();
-        } else {
+        if (!mTextureView.isAvailable()) {
             mTextureView.setSurfaceTextureListener(mSurfaceTextureListener);
         }
     }
@@ -420,12 +428,16 @@ public class Camera2Fragment extends BaseCameraFragment implements View.OnClickL
      * Starts a background thread and its {@link Handler}.
      */
     private void startBackgroundThread() {
+        if(mBackgroundThread!=null) { return; }
         mBackgroundThread = new HandlerThread("CameraBackground");
         mBackgroundThread.start();
         mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
     }
 
     private void stopBackgroundThread() {
+        if(mBackgroundThread==null) {
+            return;
+        }
         stopCounter();
         mBackgroundThread.quitSafely();
         try {
@@ -439,6 +451,10 @@ public class Camera2Fragment extends BaseCameraFragment implements View.OnClickL
 
     @Override
     public void openCamera() {
+        super.openCamera();
+        if(!mTextureView.isAvailable()) {
+            return;
+        }
         final int width = mTextureView.getWidth();
         final int height = mTextureView.getHeight();
 
@@ -687,7 +703,7 @@ public class Camera2Fragment extends BaseCameraFragment implements View.OnClickL
     }
 
     private void startPreview() {
-        if (null == mCameraDevice || !mTextureView.isAvailable() || null == mPreviewSize)
+        if (null == mCameraDevice || mTextureView==null || !mTextureView.isAvailable() || null == mPreviewSize)
             return;
         try {
             if (!mInterface.useStillshot()) {
@@ -889,7 +905,7 @@ public class Camera2Fragment extends BaseCameraFragment implements View.OnClickL
     @Override
     public void stopRecordingVideo(boolean reachedZero) {
         super.stopRecordingVideo(reachedZero);
-
+        disableReset =true;
         if (mInterface.hasLengthLimit() && mInterface.shouldAutoSubmit() &&
                 (mInterface.getRecordingStart() < 0 || mMediaRecorder == null)) {
             stopCounter();
@@ -990,7 +1006,9 @@ public class Camera2Fragment extends BaseCameraFragment implements View.OnClickL
 
             // default camera orientation used to be 90 degrees, for Nexus 5X, 6P it is 270 degrees
             if (sensorOrientation == Degrees.DEGREES_270) {
-                displayRotation += 2 % 3;
+                if(displayRotation==Surface.ROTATION_0 || displayRotation == Surface.ROTATION_180) {
+                    displayRotation = (displayRotation + 2) %4;
+                }
             }
 
             captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(displayRotation));

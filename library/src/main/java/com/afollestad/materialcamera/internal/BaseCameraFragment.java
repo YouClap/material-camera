@@ -8,6 +8,7 @@ import android.content.pm.ActivityInfo;
 import android.content.res.ColorStateList;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.RippleDrawable;
+import android.hardware.SensorManager;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Bundle;
@@ -19,6 +20,8 @@ import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v7.content.res.AppCompatResources;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.OrientationEventListener;
+import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
@@ -44,7 +47,8 @@ import static com.afollestad.materialcamera.internal.BaseCaptureActivity.FLASH_M
  * @author Aidan Follestad (afollestad)
  */
 abstract class BaseCameraFragment extends Fragment implements CameraUriInterface, View.OnClickListener {
-
+    protected OrientationEventListener mOrientationEventListener;
+    private int mLastRotation;
     protected ImageButton mButtonVideo;
     protected ImageButton mButtonStillshot;
     protected ImageButton mButtonFacing;
@@ -89,9 +93,27 @@ abstract class BaseCameraFragment extends Fragment implements CameraUriInterface
 
     @Override
     public final View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        if (mOrientationEventListener == null) {
+            mOrientationEventListener = new OrientationEventListener(getActivity(), SensorManager.SENSOR_DELAY_UI) {
+                @Override
+                public void onOrientationChanged(int angle) {
+                    // Check if current rotation is landscape but different than before
+                    int rotation = getActivity().getWindowManager().getDefaultDisplay().getRotation();
+                    if ((rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270) && rotation != mLastRotation && (mLastRotation == Surface.ROTATION_270 || mLastRotation == Surface.ROTATION_90)) {
+                        if(!mIsRecording) {
+                            Log.d("OrientationEvent", "angle changed" + rotation);
+                            // Reset camera
+                            mLastRotation=rotation;
+                            reset();
+//                            openCamera();
+                        }
+                    }
+                }
+            };
+        }
         return inflater.inflate(R.layout.mcam_fragment_videocapture, container, false);
     }
-
+    protected abstract void reset();
     protected void setImageRes(ImageView iv, @DrawableRes int res) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && iv.getBackground() instanceof RippleDrawable) {
             RippleDrawable rd = (RippleDrawable) iv.getBackground();
@@ -271,7 +293,10 @@ abstract class BaseCameraFragment extends Fragment implements CameraUriInterface
         return CameraUtil.makeTempFile(getActivity(), getArguments().getString(CameraIntentKey.SAVE_DIR), "IMG_", ".jpg");
     }
 
-    public abstract void openCamera();
+    public void openCamera() {
+        mOrientationEventListener.enable();
+        mLastRotation = getActivity().getWindowManager().getDefaultDisplay().getRotation();
+    }
 
     public abstract void closeCamera();
 
@@ -279,6 +304,7 @@ abstract class BaseCameraFragment extends Fragment implements CameraUriInterface
         closeCamera();
         releaseRecorder();
         stopCounter();
+        mOrientationEventListener.disable();
     }
 
     public abstract void takeStillshot();
