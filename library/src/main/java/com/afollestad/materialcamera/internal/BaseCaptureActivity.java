@@ -72,7 +72,7 @@ public abstract class BaseCaptureActivity extends AppCompatActivity implements B
     public static final int FLASH_MODE_AUTO = 2;
 
     @Override
-    protected final void onSaveInstanceState(Bundle outState) {
+    protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putInt("camera_position", mCameraPosition);
         outState.putBoolean("requesting_permission", mRequestingPermission);
@@ -92,7 +92,7 @@ public abstract class BaseCaptureActivity extends AppCompatActivity implements B
     }
 
     @Override
-    protected final void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
         super.onCreate(savedInstanceState);
 
@@ -179,14 +179,14 @@ public abstract class BaseCaptureActivity extends AppCompatActivity implements B
     }
 
     @Override
-    protected final void onPause() {
+    protected void onPause() {
         super.onPause();
         if (!isFinishing() && !isChangingConfigurations() && !mRequestingPermission)
             finish();
     }
 
     @Override
-    public final void onBackPressed() {
+    public void onBackPressed() {
         Fragment frag = getFragmentManager().findFragmentById(R.id.container);
         if (frag != null) {
             if (frag instanceof PlaybackVideoFragment && allowRetry()) {
@@ -205,7 +205,7 @@ public abstract class BaseCaptureActivity extends AppCompatActivity implements B
     @NonNull
     public abstract Fragment getFragment();
 
-    public final Fragment createFragment() {
+    public Fragment createFragment() {
         Fragment frag = getFragment();
         frag.setArguments(getIntent().getExtras());
         return frag;
@@ -306,7 +306,7 @@ public abstract class BaseCaptureActivity extends AppCompatActivity implements B
     }
 
     @Override
-    public final void onRetry(@Nullable String outputUri) {
+    public void onRetry(@Nullable String outputUri) {
         if (outputUri != null)
             deleteOutputFile(outputUri);
         if (!shouldAutoSubmit() || restartTimerOnRetry())
@@ -323,7 +323,7 @@ public abstract class BaseCaptureActivity extends AppCompatActivity implements B
     }
 
     @Override
-    public final void onShowPreview(@Nullable final String outputUri, boolean countdownIsAtZero) {
+    public void onShowPreview(@Nullable final String outputUri, boolean countdownIsAtZero) {
         if ((shouldAutoSubmit() && (countdownIsAtZero || !allowRetry() || !hasLengthLimit())) || outputUri == null) {
             if (outputUri == null) {
                 setResult(RESULT_CANCELED, new Intent().putExtra(MaterialCamera.ERROR_EXTRA,
@@ -359,12 +359,12 @@ public abstract class BaseCaptureActivity extends AppCompatActivity implements B
     }
 
     @Override
-    public final boolean allowRetry() {
+    public boolean allowRetry() {
         return getIntent().getBooleanExtra(CameraIntentKey.ALLOW_RETRY, true);
     }
 
     @Override
-    public final boolean shouldAutoSubmit() {
+    public boolean shouldAutoSubmit() {
         return getIntent().getBooleanExtra(CameraIntentKey.AUTO_SUBMIT, false);
     }
 
@@ -375,13 +375,13 @@ public abstract class BaseCaptureActivity extends AppCompatActivity implements B
     }
 
     @Override
-    protected final void onActivityResult(int requestCode, int resultCode, Intent data) {
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == PERMISSION_RC) showInitialRecorder();
     }
 
     @Override
-    public final void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         mRequestingPermission = false;
         if (grantResults[0] == PackageManager.PERMISSION_DENIED) {
@@ -401,7 +401,7 @@ public abstract class BaseCaptureActivity extends AppCompatActivity implements B
     }
 
     @Override
-    public final void useMedia(String uri) {
+    public void useMedia(String uri) {
         if (uri != null) {
             setResult(Activity.RESULT_OK, getIntent()
                     .putExtra(MaterialCamera.STATUS_EXTRA, MaterialCamera.STATUS_RECORDED)
