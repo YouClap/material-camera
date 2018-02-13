@@ -40,5 +40,3 @@ dependencies {
     compile 'com.afollestad:easyvideoplayer:' + versions.easyVideoPlayer
     compile 'com.afollestad.material-dialogs:core:' + versions.materialDialogs
 }
-
-apply from: 'https://raw.githubusercontent.com/afollestad/aidanfollestad.com/master/android-lib-release.gradle'
