@@ -6,7 +6,7 @@
  * Copyright Nikolai Kudashov, 2013-2014.
  */
 
-package com.iceteck.silicompressorr.videocompression;
+package videocompression;
 
 import android.media.MediaCodec;
 import android.media.MediaFormat;

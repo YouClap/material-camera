@@ -6,7 +6,7 @@
  * Copyright Nikolai Kudashov, 2013-2014.
  */
 
-package com.iceteck.silicompressorr.videocompression;
+package videocompression;
 
 import android.media.MediaCodec;
 import android.media.MediaFormat;
@@ -339,7 +339,9 @@ public class MP4Builder {
         return trackBox;
     }
 
-    /**create a Sample Table Box**/
+    /**
+     * create a Sample Table Box
+     **/
     protected Box createStbl(Track track) {
         SampleTableBox stbl = new SampleTableBox();
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.iceteck.silicompressorr.videocompression;
+package videocompression;
 
 import android.graphics.SurfaceTexture;
 import android.opengl.GLES11Ext;

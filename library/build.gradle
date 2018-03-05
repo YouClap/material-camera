@@ -9,7 +9,7 @@ ext {
 
 android {
     compileSdkVersion versions.compileSdk
-    buildToolsVersion versions.buildTools
+    //buildToolsVersion versions.buildTools
 
     defaultConfig {
         minSdkVersion versions.minSdk
@@ -39,4 +39,5 @@ dependencies {
     compile 'com.android.support:appcompat-v7:' + versions.supportLib
     compile 'com.afollestad:easyvideoplayer:' + versions.easyVideoPlayer
     compile 'com.afollestad.material-dialogs:core:' + versions.materialDialogs
+    compile 'com.googlecode.mp4parser:isoparser:1.1.21'
 }

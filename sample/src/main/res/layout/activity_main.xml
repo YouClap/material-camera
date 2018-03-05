@@ -22,6 +22,22 @@
             tools:ignore="UnusedAttribute" />
 
         <Button
+            android:id="@+id/loadFromGallery"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="@string/load_from_gallery"
+            android:theme="@style/ColoredButton" />
+
+        <View
+            android:id="@+id/view"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginBottom="@dimen/margin_less"
+            android:layout_marginTop="@dimen/margin_less"
+            android:background="#E0E0E0" />
+
+        <Button
             android:id="@+id/launchCamera"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

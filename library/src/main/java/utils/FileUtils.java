@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package life.knowledge4.videotrimmer.utils;
+package utils;
 
 import android.annotation.SuppressLint;
 import android.content.ContentUris;
