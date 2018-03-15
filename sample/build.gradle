@@ -31,6 +31,8 @@ repositories {
 }
 
 dependencies {
+    implementation 'com.android.support.constraint:constraint-layout:1.0.2'
     compile project(':library')
     compile 'com.android.support:appcompat-v7:' + versions.supportLib
+    //compile 'life.knowledge4:k4l-video-trimmer:1.0'
 }

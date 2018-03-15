@@ -8,9 +8,9 @@
 
 package videocompression;
 
+import android.annotation.TargetApi;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
-import android.util.Log;
 
 import com.coremedia.iso.BoxParser;
 import com.coremedia.iso.IsoFile;
@@ -49,9 +49,9 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
+@TargetApi(16)
 public class MP4Builder {
 
-    private static final String TAG = "MP4Builder";
     private InterleaveChunkMdat mdat = null;
     private Mp4Movie currentMp4Movie = null;
     private FileOutputStream fos = null;
@@ -63,7 +63,6 @@ public class MP4Builder {
     private ByteBuffer sizeBuffer = null;
 
     public MP4Builder createMovie(Mp4Movie mp4Movie) throws Exception {
-        Log.i(TAG, "create Mp4Movie object");
         currentMp4Movie = mp4Movie;
 
         fos = new FileOutputStream(mp4Movie.getCacheFile());
@@ -93,7 +92,6 @@ public class MP4Builder {
 
     public boolean writeSampleData(int trackIndex, ByteBuffer byteBuf, MediaCodec.BufferInfo bufferInfo, boolean isAudio) throws Exception {
         if (writeNewMdat) {
-            Log.i(TAG, "write new metadata - sampleData method");
             mdat.setContentSize(0);
             mdat.getBox(fc);
             mdat.setDataOffset(dataOffset);
@@ -113,9 +111,7 @@ public class MP4Builder {
             writedSinceLastMdat -= 32 * 1024;
         }
 
-
         currentMp4Movie.addSample(trackIndex, dataOffset, bufferInfo);
-        /**why 4 just if track is video format?**/
         byteBuf.position(bufferInfo.offset + (isAudio ? 0 : 4));
         byteBuf.limit(bufferInfo.offset + bufferInfo.size);
 
@@ -215,7 +211,6 @@ public class MP4Builder {
         }
 
         public void getBox(WritableByteChannel writableByteChannel) throws IOException {
-            Log.i(TAG, "on getBox method");
             ByteBuffer bb = ByteBuffer.allocate(16);
             long size = getSize();
             if (isSmallBox(size)) {
@@ -235,7 +230,6 @@ public class MP4Builder {
     }
 
     public static long gcd(long a, long b) {
-        Log.i(TAG, "continhas: " + a + "/" + b);
         if (b == 0) {
             return a;
         }
@@ -248,9 +242,7 @@ public class MP4Builder {
             timescale = mp4Movie.getTracks().iterator().next().getTimeScale();
         }
         for (Track track : mp4Movie.getTracks()) {
-            long timescaleAux = timescale;
             timescale = gcd(track.getTimeScale(), timescale);
-            Log.i("TAG", "timescale: " + timescale + ", timescaleAux: " + timescaleAux);
         }
         return timescale;
     }
@@ -339,9 +331,6 @@ public class MP4Builder {
         return trackBox;
     }
 
-    /**
-     * create a Sample Table Box
-     **/
     protected Box createStbl(Track track) {
         SampleTableBox stbl = new SampleTableBox();
 

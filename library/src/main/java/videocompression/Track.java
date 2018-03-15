@@ -8,6 +8,7 @@
 
 package videocompression;
 
+import android.annotation.TargetApi;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 
@@ -31,6 +32,9 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
+;
+
+@TargetApi(16)
 public class Track {
     private long trackId = 0;
     private ArrayList<Sample> samples = new ArrayList<Sample>();
@@ -68,13 +72,13 @@ public class Track {
     public Track(int id, MediaFormat format, boolean isAudio) throws Exception {
         trackId = id;
         if (!isAudio) {
-            sampleDurations.add((long) 3015);
+            sampleDurations.add((long)3015);
             duration = 3015;
             width = format.getInteger(MediaFormat.KEY_WIDTH);
             height = format.getInteger(MediaFormat.KEY_HEIGHT);
             timeScale = 90000;
             syncSamples = new LinkedList<Integer>();
-            handler = "video";
+            handler = "vide";
             headerBox = new VideoMediaHeaderBox();
             sampleDescriptionBox = new SampleDescriptionBox();
             String mime = format.getString(MediaFormat.KEY_MIME);
@@ -93,7 +97,6 @@ public class Track {
                 if (format.getByteBuffer("csd-0") != null) {
                     ArrayList<byte[]> spsArray = new ArrayList<byte[]>();
                     ByteBuffer spsBuff = format.getByteBuffer("csd-0");
-                    /**TODO BytBuffer position 4, why?**/
                     spsBuff.position(4);
                     byte[] spsBytes = new byte[spsBuff.remaining()];
                     spsBuff.get(spsBytes);
@@ -101,19 +104,16 @@ public class Track {
 
                     ArrayList<byte[]> ppsArray = new ArrayList<byte[]>();
                     ByteBuffer ppsBuff = format.getByteBuffer("csd-1");
-                    /**TODO BytBuffer position 4, why?**/
                     ppsBuff.position(4);
                     byte[] ppsBytes = new byte[ppsBuff.remaining()];
                     ppsBuff.get(ppsBytes);
                     ppsArray.add(ppsBytes);
-
                     avcConfigurationBox.setSequenceParameterSets(spsArray);
                     avcConfigurationBox.setPictureParameterSets(ppsArray);
                 }
                 //ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(spsBytes);
                 //SeqParameterSet seqParameterSet = SeqParameterSet.read(byteArrayInputStream);
 
-                /**Understand those values**/
                 avcConfigurationBox.setAvcLevelIndication(13);
                 avcConfigurationBox.setAvcProfileIndication(100);
                 avcConfigurationBox.setBitDepthLumaMinus8(-1);
@@ -138,12 +138,12 @@ public class Track {
                 sampleDescriptionBox.addBox(visualSampleEntry);
             }
         } else {
-            sampleDurations.add((long) 1024);
+            sampleDurations.add((long)1024);
             duration = 1024;
             isAudio = true;
             volume = 1;
             timeScale = format.getInteger(MediaFormat.KEY_SAMPLE_RATE);
-            handler = "sound";
+            handler = "soun";
             headerBox = new SoundMediaHeaderBox();
             sampleDescriptionBox = new SampleDescriptionBox();
             AudioSampleEntry audioSampleEntry = new AudioSampleEntry("mp4a");
@@ -160,7 +160,6 @@ public class Track {
             slConfigDescriptor.setPredefined(2);
             descriptor.setSlConfigDescriptor(slConfigDescriptor);
 
-            /**Check this decoder config values**/
             DecoderConfigDescriptor decoderConfigDescriptor = new DecoderConfigDescriptor();
             decoderConfigDescriptor.setObjectTypeIndication(0x40);
             decoderConfigDescriptor.setStreamType(5);
@@ -170,7 +169,7 @@ public class Track {
 
             AudioSpecificConfig audioSpecificConfig = new AudioSpecificConfig();
             audioSpecificConfig.setAudioObjectType(2);
-            audioSpecificConfig.setSamplingFrequencyIndex(samplingFrequencyIndexMap.get((int) audioSampleEntry.getSampleRate()));
+            audioSpecificConfig.setSamplingFrequencyIndex(samplingFrequencyIndexMap.get((int)audioSampleEntry.getSampleRate()));
             audioSpecificConfig.setChannelConfiguration(audioSampleEntry.getChannelCount());
             decoderConfigDescriptor.setAudioSpecificInfo(audioSpecificConfig);
 

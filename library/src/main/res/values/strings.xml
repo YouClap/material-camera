@@ -1,5 +1,12 @@
 <resources>
 
+    <!-- Video Trimmer -->
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="short_seconds">sec</string>
+    <string name="megabyte">MB</string>
+    <string name="kilobyte">KB</string>
+
     <string name="mcam_defaultDuration">00:00</string>
     <string name="mcam_permissions_needed">Permissions Needed</string>
     <string name="mcam_video_perm_warning">Permission to access your microphone and camera is needed, the camera will now close.</string>

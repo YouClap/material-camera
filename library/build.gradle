@@ -39,5 +39,6 @@ dependencies {
     compile 'com.android.support:appcompat-v7:' + versions.supportLib
     compile 'com.afollestad:easyvideoplayer:' + versions.easyVideoPlayer
     compile 'com.afollestad.material-dialogs:core:' + versions.materialDialogs
-    compile 'com.googlecode.mp4parser:isoparser:1.1.21'
+    compile 'com.googlecode.mp4parser:isoparser:1.0.6'
+    //compile 'life.knowledge4:k4l-video-trimmer:1.0'
 }

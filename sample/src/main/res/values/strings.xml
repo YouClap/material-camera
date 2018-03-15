@@ -16,5 +16,6 @@
     <string name="demo_from_fragment">Demo from fragment</string>
     <string name="demo_from_activity">Demo from activity</string>
     <string name="load_from_gallery">Load from gallery</string>
+    <string name="trim_video_from_gallery">Trim video from gallery</string>
 
 </resources>

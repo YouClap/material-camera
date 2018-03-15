@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <!-- VIDEO TRIMMER-->
+    <dimen name="progress_video_line_height">2dp</dimen>
+    <dimen name="frames_video_height">40dip</dimen>
+
     <dimen name="mcam_toolbar_elevation">4dp</dimen>
     <dimen name="mcam_content_inset_less">12dp</dimen>
     <dimen name="mcam_content_inset">16dp</dimen>
