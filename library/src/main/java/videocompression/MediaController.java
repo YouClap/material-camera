@@ -13,6 +13,9 @@ import android.media.MediaMetadataRetriever;
 import android.os.Build;
 import android.util.Log;
 
+import com.googlecode.mp4parser.authoring.builder.DefaultMp4Builder;
+import com.googlecode.mp4parser.authoring.builder.Mp4Builder;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -522,7 +525,7 @@ public class MediaController {
                 }
                 if (mediaMuxer != null) {
                     try {
-                        mediaMuxer.finishMovie(false);
+                        mediaMuxer.finishMovie();
                     } catch (Exception e) {
                         Log.e("tmessages", e.getMessage());
                     }

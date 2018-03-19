@@ -16,7 +16,6 @@
 
 package videocompression;
 
-import android.annotation.TargetApi;
 import android.opengl.EGL14;
 import android.opengl.EGLConfig;
 import android.opengl.EGLContext;
@@ -26,7 +25,6 @@ import android.opengl.EGLSurface;
 import android.os.Build;
 import android.view.Surface;
 
-@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class InputSurface {
     private static final boolean VERBOSE = false;
     private static final int EGL_RECORDABLE_ANDROID = 0x3142;
@@ -125,8 +123,7 @@ public class InputSurface {
 
     private void checkEglError(String msg) {
         boolean failed = false;
-        int error;
-        while ((error = EGL14.eglGetError()) != EGL14.EGL_SUCCESS) {
+        while ((EGL14.eglGetError()) != EGL14.EGL_SUCCESS) {
             failed = true;
         }
         if (failed) {

@@ -1,14 +1,13 @@
 /*
- * This is the source code of Telegram for Android v. 1.7.x.
+ * This is the source code of Telegram for Android v. 3.x.x.
  * It is licensed under GNU GPL v. 2 or later.
  * You should have received a copy of the license in this archive (see LICENSE).
  *
- * Copyright Nikolai Kudashov, 2013-2014.
+ * Copyright Nikolai Kudashov, 2013-2017.
  */
 
 package videocompression;
 
-import android.annotation.TargetApi;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 
@@ -16,6 +15,7 @@ import com.coremedia.iso.BoxParser;
 import com.coremedia.iso.IsoFile;
 import com.coremedia.iso.IsoTypeWriter;
 import com.coremedia.iso.boxes.Box;
+import com.coremedia.iso.boxes.CompositionTimeToSample;
 import com.coremedia.iso.boxes.Container;
 import com.coremedia.iso.boxes.DataEntryUrlBox;
 import com.coremedia.iso.boxes.DataInformationBox;
@@ -49,7 +49,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-@TargetApi(16)
 public class MP4Builder {
 
     private InterleaveChunkMdat mdat = null;
@@ -135,7 +134,7 @@ public class MP4Builder {
         return currentMp4Movie.addTrack(mediaFormat, isAudio);
     }
 
-    public void finishMovie(boolean error) throws Exception {
+    public void finishMovie() throws Exception {
         if (mdat.getContentSize() != 0) {
             flushCurrentMdat();
         }
@@ -160,8 +159,10 @@ public class MP4Builder {
     protected FileTypeBox createFileTypeBox() {
         LinkedList<String> minorBrands = new LinkedList<>();
         minorBrands.add("isom");
-        minorBrands.add("3gp4");
-        return new FileTypeBox("isom", 0, minorBrands);
+        minorBrands.add("iso2");
+        minorBrands.add("avc1");
+        minorBrands.add("mp41");
+        return new FileTypeBox("isom", 512, minorBrands);
     }
 
     private class InterleaveChunkMdat implements Box {
@@ -258,6 +259,7 @@ public class MP4Builder {
         long duration = 0;
 
         for (Track track : movie.getTracks()) {
+            track.prepare();
             long tracksDuration = track.getDuration() * movieTimeScale / track.getTimeScale();
             if (tracksDuration > duration) {
                 duration = tracksDuration;
@@ -336,6 +338,7 @@ public class MP4Builder {
 
         createStsd(track, stbl);
         createStts(track, stbl);
+        createCtts(track, stbl);
         createStss(track, stbl);
         createStsc(track, stbl);
         createStsz(track, stbl);
@@ -348,6 +351,33 @@ public class MP4Builder {
         stbl.addBox(track.getSampleDescriptionBox());
     }
 
+    protected void createCtts(Track track, SampleTableBox stbl) {
+        int[] sampleCompositions = track.getSampleCompositions();
+        if (sampleCompositions == null) {
+            return;
+        }
+        CompositionTimeToSample.Entry lastEntry = null;
+        List<CompositionTimeToSample.Entry> entries = new ArrayList<>();
+
+        for (int a = 0; a < sampleCompositions.length; a++) {
+            int offset = sampleCompositions[a];
+            if (lastEntry != null && lastEntry.getOffset() == offset) {
+                lastEntry.setCount(lastEntry.getCount() + 1);
+            } else {
+                lastEntry = new CompositionTimeToSample.Entry(1, offset);
+                entries.add(lastEntry);
+            }
+        }
+        CompositionTimeToSample ctts = new CompositionTimeToSample();
+        ctts.setEntries(entries);
+        stbl.addBox(ctts);
+    }
+
+    /**
+     * Sample Time Table
+     * Says how long a sample should play for in units of the timescale.
+     * audio goes normally to 441000 or 48000 KHz.
+     **/
     protected void createStts(Track track, SampleTableBox stbl) {
         TimeToSampleBox.Entry lastEntry = null;
         List<TimeToSampleBox.Entry> entries = new ArrayList<>();
@@ -365,6 +395,11 @@ public class MP4Builder {
         stbl.addBox(stts);
     }
 
+    /**
+     * Sync Sample Table
+     * Says which frames the KEY-frames.
+     * Every audio frame is considered a key frame - 1 entry that describes all the packets.
+     **/
     protected void createStss(Track track, SampleTableBox stbl) {
         long[] syncSamples = track.getSyncSamples();
         if (syncSamples != null && syncSamples.length > 0) {
@@ -374,11 +409,16 @@ public class MP4Builder {
         }
     }
 
+    /**
+     * Sample Table samples per chunk
+     * Location of the data. Packets are chunks of data.
+     * This table tells how many items (samples) per chunk exists.
+     **/
     protected void createStsc(Track track, SampleTableBox stbl) {
         SampleToChunkBox stsc = new SampleToChunkBox();
         stsc.setEntries(new LinkedList<SampleToChunkBox.Entry>());
 
-        long lastOffset = -1;
+        long lastOffset;
         int lastChunkNumber = 1;
         int lastSampleCount = 0;
 
@@ -414,12 +454,20 @@ public class MP4Builder {
         stbl.addBox(stsc);
     }
 
+    /**
+     * Sample Table Size
+     * Says what size each sample uses in bytes
+     **/
     protected void createStsz(Track track, SampleTableBox stbl) {
         SampleSizeBox stsz = new SampleSizeBox();
         stsz.setSampleSizes(track2SampleSizes.get(track));
         stbl.addBox(stsz);
     }
 
+    /**
+     * Sample Table Chunk Offset
+     * Track the offsets of each chunk
+     **/
     protected void createStco(Track track, SampleTableBox stbl) {
         ArrayList<Long> chunksOffsets = new ArrayList<>();
         long lastOffset = -1;

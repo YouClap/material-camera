@@ -1,14 +1,13 @@
 /*
- * This is the source code of Telegram for Android v. 1.7.x.
+ * This is the source code of Telegram for Android v. 3.x.x.
  * It is licensed under GNU GPL v. 2 or later.
  * You should have received a copy of the license in this archive (see LICENSE).
  *
- * Copyright Nikolai Kudashov, 2013-2014.
+ * Copyright Nikolai Kudashov, 2013-2017.
  */
 
 package videocompression;
 
-import android.annotation.TargetApi;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 
@@ -17,10 +16,9 @@ import com.googlecode.mp4parser.util.Matrix;
 import java.io.File;
 import java.util.ArrayList;
 
-@TargetApi(16)
 public class Mp4Movie {
     private Matrix matrix = Matrix.ROTATE_0;
-    private ArrayList<Track> tracks = new ArrayList<Track>();
+    private ArrayList<Track> tracks = new ArrayList<>();
     private File cacheFile;
     private int width;
     private int height;
@@ -66,7 +64,7 @@ public class Mp4Movie {
         return cacheFile;
     }
 
-    public void addSample(int trackIndex, long offset, MediaCodec.BufferInfo bufferInfo) throws Exception {
+    public void addSample(int trackIndex, long offset, MediaCodec.BufferInfo bufferInfo) {
         if (trackIndex < 0 || trackIndex >= tracks.size()) {
             return;
         }
@@ -74,7 +72,7 @@ public class Mp4Movie {
         track.addSample(offset, bufferInfo);
     }
 
-    public int addTrack(MediaFormat mediaFormat, boolean isAudio) throws Exception {
+    public int addTrack(MediaFormat mediaFormat, boolean isAudio) {
         tracks.add(new Track(tracks.size(), mediaFormat, isAudio));
         return tracks.size() - 1;
     }
