@@ -36,9 +36,9 @@ repositories {
 }
 
 dependencies {
-    compile 'com.android.support:appcompat-v7:' + versions.supportLib
-    compile 'com.afollestad:easyvideoplayer:' + versions.easyVideoPlayer
-    compile 'com.afollestad.material-dialogs:core:' + versions.materialDialogs
-    compile 'com.googlecode.mp4parser:isoparser:1.0.6'
-    //compile 'life.knowledge4:k4l-video-trimmer:1.0'
+    implementation 'com.android.support:appcompat-v7:' + versions.supportLib
+    implementation 'com.afollestad:easyvideoplayer:' + versions.easyVideoPlayer
+    implementation 'com.afollestad.material-dialogs:core:' + versions.materialDialogs
+    implementation 'com.googlecode.mp4parser:isoparser:1.0.6'
+    implementation 'id.zelory:compressor:2.1.0'
 }

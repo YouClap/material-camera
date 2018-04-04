@@ -374,7 +374,7 @@ public class MP4Builder {
     }
 
     /**
-     * Sample Time Table
+     * Decoding TIME to Sample box
      * Says how long a sample should play for in units of the timescale.
      * audio goes normally to 441000 or 48000 KHz.
      **/
@@ -396,8 +396,8 @@ public class MP4Builder {
     }
 
     /**
-     * Sync Sample Table
-     * Says which frames the KEY-frames.
+     * SYNC Sample box
+     * Says which frames are the KEY-frames.
      * Every audio frame is considered a key frame - 1 entry that describes all the packets.
      **/
     protected void createStss(Track track, SampleTableBox stbl) {
@@ -410,7 +410,7 @@ public class MP4Builder {
     }
 
     /**
-     * Sample Table samples per chunk
+     * Sample to Chunk box - samples per chunk
      * Location of the data. Packets are chunks of data.
      * This table tells how many items (samples) per chunk exists.
      **/
@@ -455,7 +455,7 @@ public class MP4Builder {
     }
 
     /**
-     * Sample Table Size
+     * SiZe box
      * Says what size each sample uses in bytes
      **/
     protected void createStsz(Track track, SampleTableBox stbl) {
@@ -465,7 +465,7 @@ public class MP4Builder {
     }
 
     /**
-     * Sample Table Chunk Offset
+     * Chunk Offset box - Sample Table Chunk Offset
      * Track the offsets of each chunk
      **/
     protected void createStco(Track track, SampleTableBox stbl) {

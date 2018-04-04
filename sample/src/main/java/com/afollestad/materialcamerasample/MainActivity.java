@@ -19,7 +19,6 @@ import android.widget.Toast;
 import com.afollestad.materialcamera.MaterialCamera;
 
 import java.io.File;
-import java.net.URISyntaxException;
 import java.text.DecimalFormat;
 
 import life.knowledge4.videotrimmer.TrimmerActivity;
@@ -35,6 +34,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private static final int CAMERA_RQ = 6969;
     private static final int PERMISSION_RQ = 84;
+    private static final int REQUEST_VIDEO_METADATA = 1;
+    private static final int REQUEST_IMAGE_GALLERY = 4;
     private static final int REQUEST_VIDEO_GALLERY = 2;
     private static final int REQUEST_VIDEO_TRIMMER = 3;
     static final String EXTRA_VIDEO_PATH = "EXTRA_VIDEO_PATH";
@@ -44,6 +45,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
+        findViewById(R.id.getVideoMetadata).setOnClickListener(this);
+        findViewById(R.id.loadImageFromGallery).setOnClickListener(this);
         findViewById(R.id.loadFromGallery).setOnClickListener(this);
         findViewById(R.id.trimVideoFromGallery).setOnClickListener(this);
         findViewById(R.id.launchCamera).setOnClickListener(this);
@@ -66,13 +69,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
     public void onClick(View view) {
+        if (view.getId() == R.id.getVideoMetadata) {
+            pickFromGallery(view, true, false);
+            return;
+        }
+
+        if (view.getId() == R.id.loadImageFromGallery) {
+            pickFromGallery(view, false, true);
+            return;
+        }
+
         if (view.getId() == R.id.loadFromGallery) {
-            pickFromGallery(false);
+            pickFromGallery(view, true, false);
             return;
         }
 
         if (view.getId() == R.id.trimVideoFromGallery) {
-            pickFromGallery(true);
+            pickFromGallery(view, true, false);
             return;
         }
 
@@ -100,7 +113,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         MaterialCamera materialCamera =
                 new MaterialCamera(this)
                         .saveDir(saveDir)
-                        .showPortraitWarning(true)
+                        .showPortraitWarning(false)
                         .allowRetry(true)
                         .defaultToFrontFacing(true)
                         .allowRetry(true)
@@ -117,18 +130,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     /**
      * TODO miss pick photo from Gallery
      *
-     * @param toTrim boolean
-     *               Select video file from Gallery
+     * @param view view
+     *             Select video file from Gallery
      **/
-    private void pickFromGallery(boolean toTrim) {
+    private void pickFromGallery(View view, boolean isVideo, boolean isImage) {
         Intent intent = new Intent();
-        intent.setTypeAndNormalize("video/*");
+        if (isVideo)
+            intent.setTypeAndNormalize("video/*");
+        if (isImage)
+            intent.setTypeAndNormalize("image/*");
         intent.setAction(Intent.ACTION_GET_CONTENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
-        if (toTrim)
-            startActivityForResult(Intent.createChooser(intent, "Gallery"), REQUEST_VIDEO_TRIMMER);
-        else
+        if (view.getId() == R.id.getVideoMetadata)
+            startActivityForResult(Intent.createChooser(intent, "Gallery"), REQUEST_VIDEO_METADATA);
+        else if (view.getId() == R.id.loadFromGallery)
             startActivityForResult(Intent.createChooser(intent, "Gallery"), REQUEST_VIDEO_GALLERY);
+        else if (view.getId() == R.id.loadImageFromGallery)
+            startActivityForResult(Intent.createChooser(intent, "Gallery"), REQUEST_IMAGE_GALLERY);
+        else startActivityForResult(Intent.createChooser(intent, "Gallery"), REQUEST_VIDEO_TRIMMER);
     }
 
     private String readableFileSize(long size) {
@@ -147,57 +166,56 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK) {
+            final Uri selectedUri = data.getData();
+            final String selectedFile = FileUtils.getPath(this, selectedUri);
+            Log.i(TAG, "file: " + selectedFile);
+            if (requestCode == REQUEST_VIDEO_METADATA) {
+                startMetadataActivity(selectedFile);
+            } else if (requestCode == REQUEST_IMAGE_GALLERY) {
+                /**Do Image Compression**/
+                new ImageCompressAsyncTask(this).execute(selectedFile, new File(Environment.getExternalStorageDirectory(), "MaterialCamera").getAbsolutePath());
 
-        if (requestCode == REQUEST_VIDEO_GALLERY) {
-            if (resultCode == RESULT_OK) {
-                final Uri selectedUri = data.getData();
-                final String selectedFile = FileUtils.getPath(this, selectedUri);
-                Log.i(TAG, "file: " + selectedFile);
-
-
+            } else if (requestCode == REQUEST_VIDEO_GALLERY) {
                 /**Do compression
                  * Compressed video is been saved in Material Camera directory**/
                 Log.i("MAIN ACT", "before");
                 new VideoCompressAsyncTask(this).execute(selectedFile, new File(Environment.getExternalStorageDirectory(), "MaterialCamera").getAbsolutePath());
 
                 Log.i("MAIN ACTIVITY", "after video compress async task");
-            } else {
-                Log.e("MAIN ACTIVITY", "Shit happens");
+            } else if (requestCode == REQUEST_VIDEO_TRIMMER) {
+                startTrimActivity(selectedFile);
             }
-        } else if (requestCode == REQUEST_VIDEO_TRIMMER) {
-            final Uri selectedUri = data.getData();
-            if (selectedUri != null) {
-                Log.i(TAG, "" + selectedUri);
-                startTrimActivity(selectedUri);
-            } else {
-                Toast.makeText(MainActivity.this, "Cannot retrieve selected video", Toast.LENGTH_SHORT).show();
-
-            }
-        }
-
-        // Received recording or error from MaterialCamera
-        if (requestCode == CAMERA_RQ) {
-            if (resultCode == RESULT_OK) {
+            // Received recording or error from MaterialCamera
+            else if (requestCode == CAMERA_RQ) {
                 final File file = new File(data.getData().getPath());
                 Toast.makeText(
                         this,
                         String.format("Saved to: %s, size: %s", file.getAbsolutePath(), fileSize(file)),
                         Toast.LENGTH_LONG)
                         .show();
-            } else if (data != null) {
-                Exception e = (Exception) data.getSerializableExtra(MaterialCamera.ERROR_EXTRA);
-                if (e != null) {
-                    e.printStackTrace();
-                    Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                }
             }
+        } else if (data != null) {
+            Exception e = (Exception) data.getSerializableExtra(MaterialCamera.ERROR_EXTRA);
+            if (e != null) {
+                e.printStackTrace();
+                Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        } else {
+            Log.e(TAG, "FAILED ma friend");
         }
     }
 
-    private void startTrimActivity(Uri selectedUri) {
+    private void startMetadataActivity(String selectedFile) {
+        Intent intent = new Intent(this, MetadataActivity.class);
+        intent.putExtra(EXTRA_VIDEO_PATH, selectedFile);
+        startActivity(intent);
+
+    }
+
+    private void startTrimActivity(String selectedFile) {
         Intent intent = new Intent(this, TrimmerActivity.class);
-        intent.putExtra(EXTRA_VIDEO_PATH, FileUtils.getPath(this, selectedUri));
-        Log.i(TAG, selectedUri.toString());
+        intent.putExtra(EXTRA_VIDEO_PATH, selectedFile);
         startActivity(intent);
     }
 
@@ -249,16 +267,61 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         @Override
         protected String doInBackground(String... paths) {
-            String filePath = null;
-            try {
-                if (startTime != 0 || endTime != 0) {
-                    filePath = SiliCompressor.with(mContext).compressVideo(Uri.parse(paths[0]), paths[1], startTime * 1000, endTime * 1000, width, height, bitrate);
-                } else {
-                    filePath = SiliCompressor.with(mContext).compressVideo(Uri.parse(paths[0]), paths[1]);
-                }
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
+            String filePath;
+            if (startTime != 0 || endTime != 0) {
+                filePath = SiliCompressor.with(mContext).compressVideo(paths[0], paths[1], startTime * 1000, endTime * 1000, width, height, bitrate);
+            } else {
+                filePath = SiliCompressor.with(mContext).compressVideo(paths[0], paths[1]);
             }
+            return filePath;
+        }
+
+        @Override
+        protected void onPostExecute(String compressedFilePath) {
+            super.onPostExecute(compressedFilePath);
+            compressionTime = System.currentTimeMillis() - compressionTime;
+            Toast.makeText(mContext, "Video compressed time: " + getCompressionTimeDuration() / 1000 + " seconds, path: " + compressedFilePath, Toast.LENGTH_LONG).show();
+            Log.i("Main Activity", "onPostExecute time seconds: " + compressionTime / 1000);
+        }
+
+        public long getCompressionTimeDuration() {
+            return compressionTime;
+        }
+    }
+
+    public static final class ImageCompressAsyncTask extends AsyncTask<String, String, String> {
+
+        Context mContext;
+        long compressionTime;
+        int width;
+        int height;
+        int quality;
+
+        public ImageCompressAsyncTask(Context context) {
+            mContext = context;
+            this.width = 640;
+            this.height = 480;
+            this.quality = 75;
+            compressionTime = System.currentTimeMillis();
+        }
+
+        public ImageCompressAsyncTask(Context context, int width, int height, int quality) {
+            mContext = context;
+            this.width = width;
+            this.height = height;
+            this.quality = quality;
+            compressionTime = System.currentTimeMillis();
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected String doInBackground(String... paths) {
+            String filePath;
+            filePath = SiliCompressor.with(mContext).compressImage(paths[0], paths[1], width, height, quality, false);
             return filePath;
         }
 

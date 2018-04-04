@@ -17,5 +17,8 @@
     <string name="demo_from_activity">Demo from activity</string>
     <string name="load_from_gallery">Load from gallery</string>
     <string name="trim_video_from_gallery">Trim video from gallery</string>
+    <string name="get_video_metadata">Get video metadata</string>
+    <string name="title_activity_metadata">MetadataActivity</string>
+    <string name="load_image_from_gallery">Load Image From Gallery</string>
 
 </resources>

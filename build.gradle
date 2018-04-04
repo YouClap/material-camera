@@ -15,11 +15,13 @@ buildscript {
 allprojects {
     repositories {
         jcenter()
+        google()
     }
 
     buildscript {
         repositories {
             maven { url "https://plugins.gradle.org/m2/" }
+            google()
         }
     }
     apply plugin: "com.diffplug.gradle.spotless"

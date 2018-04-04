@@ -33,7 +33,11 @@
             android:name="com.afollestad.materialcamera.CaptureActivity2"
             android:theme="@style/MaterialCamera.CaptureActivity" />
         <activity android:name=".FragmentActivity" />
-        <activity android:name="life.knowledge4.videotrimmer.TrimmerActivity"></activity>
+        <activity android:name="life.knowledge4.videotrimmer.TrimmerActivity" />
+        <activity
+            android:name=".MetadataActivity"
+            android:label="@string/title_activity_metadata"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 
 </manifest>

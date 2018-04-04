@@ -32,11 +32,15 @@ public class MediaController {
 
     /**
      * Default video parameters
+     * <p>
+     * 1080p : 1920 x 1080  (16/9)
+     * 720p  : 1280 x 720   (16/9)
+     * 480p  : 854 x 480    (16/9)
      **/
     private final static String MIME_TYPE = "video/avc";
-    private final static int DEFAULT_VIDEO_WIDTH = 1280;
-    private final static int DEFAULT_VIDEO_HEIGHT = 720;
-    private final static int DEFAULT_VIDEO_BITRATE = 3072 * 1024;
+    private final static int DEFAULT_VIDEO_WIDTH = 854;
+    private final static int DEFAULT_VIDEO_HEIGHT = 480;
+    private final static int DEFAULT_VIDEO_BITRATE = 2048 * 1024;
     private final static int DEFAULT_FRAME_RATE = 30;
     private final static int DEFAULT_KEY_FRAME_INTERVAL = 2; //each "2" seconds (time interval) create a new Key frame
 
@@ -169,7 +173,7 @@ public class MediaController {
      *
      * @param sourcePath the source uri for the file as per
      * @param destDir    the destination directory where compressed video is eventually saved
-     * @return
+     * @return boolean - true if compression happens, false if not.
      */
     public boolean convertVideo(final String sourcePath, File destDir) {
         return convertVideo(sourcePath, destDir, -1l, -1l, DEFAULT_VIDEO_WIDTH, DEFAULT_VIDEO_HEIGHT, DEFAULT_VIDEO_BITRATE);
@@ -185,7 +189,7 @@ public class MediaController {
      * @param outWidth   the target width of the converted video, 0 is default
      * @param outHeight  the target height of the converted video, 0 is default
      * @param outBitrate the target bitrate of the converted video, 0 is default
-     * @return
+     * @return boolean - true if compression happens, false if not.
      */
     public boolean convertVideo(final String sourcePath, File destDir, long startTime, long endTime, int outWidth, int outHeight, int outBitrate) {
         this.path = sourcePath;
@@ -285,7 +289,7 @@ public class MediaController {
                             outputFormat.setInteger(MediaFormat.KEY_BIT_RATE, resultBitrate);
                             outputFormat.setInteger(MediaFormat.KEY_FRAME_RATE, DEFAULT_FRAME_RATE);
                             outputFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, DEFAULT_KEY_FRAME_INTERVAL);
-                            Log.i(TAG, "convertVideo() - media format INPUT: " + inputFormat.toString());
+                            Log.i(TAG, "convertVideo() - media format OUTPUT: " + outputFormat.toString());
 
                             encoder = MediaCodec.createEncoderByType(MIME_TYPE);
                             /**Why configure method has Surface argument set to null?**/
@@ -345,8 +349,6 @@ public class MediaController {
                                         }
                                     }
                                 }
-                                Log.i(TAG, "convertVideo() - !! INPUT IS DONE !!");
-
                                 boolean decoderOutputAvailable = !decoderDone;
                                 boolean encoderOutputAvailable = true;
                                 /**This while cycle makes no sense, it will be executed one time only because encoderOutputAvailable is already set to true, unless encoderStatus = INFO_TRY_AGAIN_LATER**/
@@ -419,7 +421,6 @@ public class MediaController {
                                         encoder.releaseOutputBuffer(encoderStatus, false);
                                     }
                                     if (encoderStatus != MediaCodec.INFO_TRY_AGAIN_LATER) {
-                                        Log.i(TAG, "convertVideo() - try again later -> go to while loop again");
                                         continue;
                                     }
 
@@ -438,7 +439,6 @@ public class MediaController {
                                             throw new RuntimeException("unexpected result from decoder.dequeueOutputBuffer: " + decoderStatus);
                                         } else {
                                             boolean doRender = info.size != 0;
-                                            Log.i(TAG, "convertVideo() - do render?: " + doRender);
 
                                             if (endTime > 0 && info.presentationTimeUs >= endTime) {
                                                 inputDone = true;
