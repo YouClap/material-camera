@@ -4,9 +4,12 @@
     <color name="mcam_color_light">#FAFAFA</color>
     <color name="mcam_color_dark">#424242</color>
 
-    <color name="colorPrimary">#3F51B5</color>
-    <color name="colorPrimaryDark">#303F9F</color>
-    <color name="colorAccent">#FF4081</color>
+    <color name="colorPrimary">@color/tomato</color>
+    <color name="colorPrimaryDark">#b72833</color> <!--TODO Review this color-->
+    <color name="colorAccent">@color/greenyBlue</color>
+
+    <color name="tomato">#e73a35</color>
+    <color name="greenyBlue">#52bcb8</color>
 
     <!-- VIDEO TRIMMER -->
     <color name="background_video_color">#2f3031</color>

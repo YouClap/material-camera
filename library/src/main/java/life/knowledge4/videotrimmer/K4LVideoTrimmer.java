@@ -55,9 +55,7 @@ import life.knowledge4.videotrimmer.interfaces.OnProgressVideoListener;
 import life.knowledge4.videotrimmer.interfaces.OnRangeSeekBarListener;
 import life.knowledge4.videotrimmer.interfaces.OnTrimVideoListener;
 import life.knowledge4.videotrimmer.utils.BackgroundExecutor;
-import life.knowledge4.videotrimmer.utils.TrimVideoUtils;
 import life.knowledge4.videotrimmer.utils.UiThreadExecutor;
-import life.knowledge4.videotrimmer.utils.VideoTime;
 import life.knowledge4.videotrimmer.view.ProgressBarView;
 import life.knowledge4.videotrimmer.view.RangeSeekBarView;
 import life.knowledge4.videotrimmer.view.Thumb;
@@ -76,12 +74,12 @@ public class K4LVideoTrimmer extends FrameLayout {
     private SeekBar mHolderTopView;
     private RangeSeekBarView mRangeSeekBarView;
     private RelativeLayout mLinearVideo;
-    private View mTimeInfoContainer;
+    //private View mTimeInfoContainer;
     private VideoView mVideoView;
     private ImageView mPlayView;
-    private TextView mTextSize;
-    private TextView mTextTimeFrame;
-    private TextView mTextTime;
+    //private TextView mTextSize;
+    //private TextView mTextTimeFrame;
+    //private TextView mTextTime;
     private TimeLineView mTimeLineView;
 
     private ProgressBarView mVideoProgressIndicator;
@@ -122,10 +120,10 @@ public class K4LVideoTrimmer extends FrameLayout {
         mLinearVideo = ((RelativeLayout) findViewById(R.id.layout_surface_view));
         mVideoView = ((VideoView) findViewById(R.id.video_loader));
         mPlayView = ((ImageView) findViewById(R.id.icon_video_play));
-        mTimeInfoContainer = findViewById(R.id.timeText);
-        mTextSize = ((TextView) findViewById(R.id.textSize));
-        mTextTimeFrame = ((TextView) findViewById(R.id.textTimeSelection));
-        mTextTime = ((TextView) findViewById(R.id.textTime));
+//        mTimeInfoContainer = findViewById(R.id.timeText);
+//        mTextSize = ((TextView) findViewById(R.id.textSize));
+//        mTextTimeFrame = ((TextView) findViewById(R.id.textTimeSelection));
+//        mTextTime = ((TextView) findViewById(R.id.textTime));
         mTimeLineView = ((TimeLineView) findViewById(R.id.timeLineView));
 
         setUpListeners();
@@ -136,7 +134,7 @@ public class K4LVideoTrimmer extends FrameLayout {
         mListeners = new ArrayList<>();
         mListeners.add(new OnProgressVideoListener() {
             @Override
-            public void updateProgress(int time, int max, float scale) {
+            public void updateProgress(int time, int max, float scale, int startPosition) {
                 updateVideoProgress(time);
             }
         });
@@ -434,12 +432,12 @@ public class K4LVideoTrimmer extends FrameLayout {
 
     private void setTimeFrames() {
         String seconds = getContext().getString(R.string.short_seconds);
-        mTextTimeFrame.setText(String.format("%s %s - %s %s", stringForTime(mStartPosition), seconds, stringForTime(mEndPosition), seconds));
+        //mTextTimeFrame.setText(String.format("%s %s - %s %s", stringForTime(mStartPosition), seconds, stringForTime(mEndPosition), seconds));
     }
 
     private void setTimeVideo(int position) {
         String seconds = getContext().getString(R.string.short_seconds);
-        mTextTime.setText(String.format("%s %s", stringForTime(position), seconds));
+        //mTextTime.setText(String.format("%s %s", stringForTime(position), seconds));
     }
 
     private void onSeekThumbs(int index, float value) {
@@ -476,10 +474,10 @@ public class K4LVideoTrimmer extends FrameLayout {
         int position = mVideoView.getCurrentPosition();
         if (all) {
             for (OnProgressVideoListener item : mListeners) {
-                item.updateProgress(position, mDuration, ((position * 100) / mDuration));
+                item.updateProgress(position, mDuration, ((position * 100) / mDuration), mStartPosition);
             }
         } else {
-            mListeners.get(1).updateProgress(position, mDuration, ((position * 100) / mDuration));
+            mListeners.get(1).updateProgress(position, mDuration, ((position * 100) / mDuration), mStartPosition);
         }
     }
 
@@ -496,11 +494,12 @@ public class K4LVideoTrimmer extends FrameLayout {
             return;
         }
 
-        if (mHolderTopView != null) {
-            // use long to avoid overflow
-            setProgressBarPosition(time);
+        if (time >= mStartPosition) {
+            if (mHolderTopView != null) {
+                setProgressBarPosition(time);
+            }
+            setTimeVideo(time);
         }
-        setTimeVideo(time);
     }
 
     private void setProgressBarPosition(int position) {
@@ -517,7 +516,7 @@ public class K4LVideoTrimmer extends FrameLayout {
      * @param visible whether or not the videoInformation will be visible
      */
     public void setVideoInformationVisibility(boolean visible) {
-        mTimeInfoContainer.setVisibility(visible ? VISIBLE : GONE);
+        //mTimeInfoContainer.setVisibility(visible ? VISIBLE : GONE);
     }
 
     /**
@@ -588,9 +587,9 @@ public class K4LVideoTrimmer extends FrameLayout {
 
             if (fileSizeInKB > 1000) {
                 long fileSizeInMB = fileSizeInKB / 1024;
-                mTextSize.setText(String.format("%s %s", fileSizeInMB, getContext().getString(R.string.megabyte)));
+                //mTextSize.setText(String.format("%s %s", fileSizeInMB, getContext().getString(R.string.megabyte)));
             } else {
-                mTextSize.setText(String.format("%s %s", fileSizeInKB, getContext().getString(R.string.kilobyte)));
+                //mTextSize.setText(String.format("%s %s", fileSizeInKB, getContext().getString(R.string.kilobyte)));
             }
         }
 

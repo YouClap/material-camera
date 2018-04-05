@@ -254,9 +254,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             mContext = context;
             this.startTime = startTime;
             this.endTime = endTime;
-            this.width = 720;
-            this.height = 1280;
-            this.bitrate = 1024 * 1024 * 3;
+            this.width = 854;
+            this.height = 480;
+            this.bitrate = 1024 * 1024 * 2;
             compressionTime = System.currentTimeMillis();
         }
 

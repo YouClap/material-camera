@@ -39,14 +39,13 @@ public class TrimmerActivity extends AppCompatActivity implements OnTrimVideoLis
         //setting progressbar
         mProgressDialog = new ProgressDialog(this);
         mProgressDialog.setCancelable(false);
-        mProgressDialog.setMessage("trimmming video");
+        mProgressDialog.setMessage(getString(R.string.trimming_progress));
 
         mVideoTrimmer = ((K4LVideoTrimmer) findViewById(R.id.timeLine));
         if (mVideoTrimmer != null) {
             mVideoTrimmer.setMaxDuration(13);
             mVideoTrimmer.setOnTrimVideoListener(this);
             mVideoTrimmer.setOnK4LVideoListener(this);
-            //mVideoTrimmer.setDestinationPath();
             mVideoTrimmer.setVideoURI(Uri.parse(path));
             mVideoTrimmer.setVideoInformationVisibility(true);
         }
@@ -74,8 +73,7 @@ public class TrimmerActivity extends AppCompatActivity implements OnTrimVideoLis
         Log.i("TRIMMER", "uri: " + uri);
         Log.i("TRIMMER", "uri: " + uri.getPath());
 
-
-        final AsyncTask<String, String, String> materialCamera = new MainActivity.VideoCompressAsyncTask(this, startTime, endTime).execute(uri.getPath(), new File(Environment.getExternalStorageDirectory(), "MaterialCamera").getAbsolutePath());
+        new MainActivity.VideoCompressAsyncTask(this, startTime, endTime).execute(uri.getPath(), new File(Environment.getExternalStorageDirectory(), "MaterialCamera").getAbsolutePath());
 
         /*runOnUiThread(new Runnable() {
             @Override
