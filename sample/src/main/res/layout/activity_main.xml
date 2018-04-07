@@ -28,6 +28,31 @@
             android:background="#E0E0E0" />
 
         <Button
+            android:id="@+id/takePhoto"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="@string/take_photo"
+            android:theme="@style/ColoredButton" />
+
+        <Button
+            android:id="@+id/takeVideo"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="@string/take_video"
+            android:theme="@style/ColoredButton" />
+
+
+        <View
+            android:id="@+id/view"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginBottom="@dimen/margin_less"
+            android:layout_marginTop="@dimen/margin_less"
+            android:background="#E0E0E0" />
+
+        <Button
             android:id="@+id/loadImageFromGallery"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -85,26 +110,26 @@
             android:layout_marginTop="@dimen/margin_less"
             android:background="#E0E0E0" />
 
-        <Button
-            android:id="@+id/launchFromFragment"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginBottom="@dimen/margin_less"
-            android:layout_marginTop="@dimen/margin_less"
-            android:padding="@dimen/mcam_content_inset"
-            android:text="@string/launch_from_fragment"
-            android:theme="@style/ColoredButton" />
+        <!-- <Button
+             android:id="@+id/launchFromFragment"
+             android:layout_width="match_parent"
+             android:layout_height="wrap_content"
+             android:layout_gravity="center"
+             android:layout_marginBottom="@dimen/margin_less"
+             android:layout_marginTop="@dimen/margin_less"
+             android:padding="@dimen/mcam_content_inset"
+             android:text="@string/launch_from_fragment"
+             android:theme="@style/ColoredButton" />
 
-        <Button
-            android:id="@+id/launchFromFragmentSupport"
-            android:layout_width="match_parent"
-            android:layout_height="47dp"
-            android:layout_gravity="center"
-            android:layout_marginBottom="@dimen/margin_less"
-            android:padding="@dimen/mcam_content_inset"
-            android:text="@string/launch_from_fragment_support"
-            android:theme="@style/ColoredButton" />
+         <Button
+             android:id="@+id/launchFromFragmentSupport"
+             android:layout_width="match_parent"
+             android:layout_height="47dp"
+             android:layout_gravity="center"
+             android:layout_marginBottom="@dimen/margin_less"
+             android:padding="@dimen/mcam_content_inset"
+             android:text="@string/launch_from_fragment_support"
+             android:theme="@style/ColoredButton" />-->
 
     </LinearLayout>
 

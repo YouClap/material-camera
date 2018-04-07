@@ -8,9 +8,11 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -19,7 +21,10 @@ import android.widget.Toast;
 import com.afollestad.materialcamera.MaterialCamera;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import life.knowledge4.videotrimmer.TrimmerActivity;
 import utils.FileUtils;
@@ -35,9 +40,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final int CAMERA_RQ = 6969;
     private static final int PERMISSION_RQ = 84;
     private static final int REQUEST_VIDEO_METADATA = 1;
+    private static final int PERMISSION_CAMERA = 69;
+    private static final int REQUEST_IMAGE_CAPTURE = 100;
+    private static final int REQUEST_VIDEO_CAPTURE = 200;
     private static final int REQUEST_IMAGE_GALLERY = 4;
     private static final int REQUEST_VIDEO_GALLERY = 2;
     private static final int REQUEST_VIDEO_TRIMMER = 3;
+
+    private static final int TYPE_IMAGE = 10;
+    private static final int TYPE_VIDEO = 20;
+
+    Uri capturedUri;
+
+    private static final String IMAGE_SUFFIX = ".jpg";
+    private static final String IMAGE_FORMAT_NAME = "JPEG_";
+    private static final String VIDEO_SUFFIX = ".mp4";
+    private static final String VIDEO_FORMAT_NAME = "VID_";
+
+    private final String EXTRA_IMAGE_PATH = "EXTRA_IMAGE_PATH";
     static final String EXTRA_VIDEO_PATH = "EXTRA_VIDEO_PATH";
 
     @Override
@@ -46,13 +66,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         setContentView(R.layout.activity_main);
         findViewById(R.id.getVideoMetadata).setOnClickListener(this);
+        findViewById(R.id.takePhoto).setOnClickListener(this);
+        findViewById(R.id.takeVideo).setOnClickListener(this);
         findViewById(R.id.loadImageFromGallery).setOnClickListener(this);
         findViewById(R.id.loadFromGallery).setOnClickListener(this);
         findViewById(R.id.trimVideoFromGallery).setOnClickListener(this);
         findViewById(R.id.launchCamera).setOnClickListener(this);
         findViewById(R.id.launchCameraStillshot).setOnClickListener(this);
-        findViewById(R.id.launchFromFragment).setOnClickListener(this);
-        findViewById(R.id.launchFromFragmentSupport).setOnClickListener(this);
+        //findViewById(R.id.launchFromFragment).setOnClickListener(this);
+        //findViewById(R.id.launchFromFragmentSupport).setOnClickListener(this);
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -64,6 +86,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_RQ);
         }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, PERMISSION_CAMERA);
+        }
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -71,6 +96,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View view) {
         if (view.getId() == R.id.getVideoMetadata) {
             pickFromGallery(view, true, false);
+            return;
+        }
+
+        if (view.getId() == R.id.takePhoto) {
+            takePhotoIntent();
+            return;
+        }
+
+        if (view.getId() == R.id.takeVideo) {
+            takeVideoIntent();
             return;
         }
 
@@ -89,7 +124,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return;
         }
 
-        if (view.getId() == R.id.launchFromFragment) {
+        /*if (view.getId() == R.id.launchFromFragment) {
             Intent intent = new Intent(this, FragmentActivity.class);
             startActivity(intent);
             return;
@@ -99,7 +134,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             intent.putExtra("support", true);
             startActivity(intent);
             return;
-        }
+        }*/
 
         File saveDir = null;
 
@@ -127,9 +162,52 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         materialCamera.start(CAMERA_RQ);
     }
 
+    private void takePhotoIntent() {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+
+            //Create the File where the photo should go
+            File photoFile = null;
+            try {
+                photoFile = createMediaFile(TYPE_IMAGE);
+            } catch (IOException ex) {
+                // Error occurred while creating the FileF
+                Log.e(TAG, "IOException: " + ex.getMessage());
+            }
+
+            //Continue only if photo file was sucessuflly created
+            if (photoFile != null) {
+                String authority = "com.afollestad.materialcamerasample.file_provider";
+                Uri photoURI = FileProvider.getUriForFile(this, authority, photoFile);
+                capturedUri = Uri.fromFile(photoFile);
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+            }
+        }
+    }
+
+    private void takeVideoIntent() {
+        Intent takeVideoIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
+        if (takeVideoIntent.resolveActivity(getPackageManager()) != null) {
+            startActivityForResult(takeVideoIntent, REQUEST_VIDEO_CAPTURE);
+        }
+    }
+
+    private File createMediaFile(int type) throws IOException {
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String fileName = type == TYPE_IMAGE ? IMAGE_FORMAT_NAME + timeStamp + "_" : VIDEO_FORMAT_NAME + timeStamp + "_";
+        File storageDir = Environment.getExternalStoragePublicDirectory(type == TYPE_IMAGE ? Environment.DIRECTORY_PICTURES : Environment.DIRECTORY_MOVIES);
+        Log.d(TAG, "mediafile time: " + timeStamp);
+        Log.d(TAG, "mediafile name: " + fileName);
+        Log.d(TAG, "mediafile dir path: " + storageDir.getAbsolutePath());
+
+        File file = File.createTempFile(
+                fileName, type == TYPE_IMAGE ? IMAGE_SUFFIX : VIDEO_SUFFIX, storageDir);
+        Log.d(TAG, "created media file without data for now: " + file.getAbsolutePath());
+        return file;
+    }
+
     /**
-     * TODO miss pick photo from Gallery
-     *
      * @param view view
      *             Select video file from Gallery
      **/
@@ -147,7 +225,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             startActivityForResult(Intent.createChooser(intent, "Gallery"), REQUEST_VIDEO_GALLERY);
         else if (view.getId() == R.id.loadImageFromGallery)
             startActivityForResult(Intent.createChooser(intent, "Gallery"), REQUEST_IMAGE_GALLERY);
-        else startActivityForResult(Intent.createChooser(intent, "Gallery"), REQUEST_VIDEO_TRIMMER);
+        else
+            startActivityForResult(Intent.createChooser(intent, "Gallery"), REQUEST_VIDEO_TRIMMER);
     }
 
     private String readableFileSize(long size) {
@@ -167,11 +246,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK) {
-            final Uri selectedUri = data.getData();
-            final String selectedFile = FileUtils.getPath(this, selectedUri);
-            Log.i(TAG, "file: " + selectedFile);
+            String selectedFile;
+            if (data == null || data.getData() == null) {
+                selectedFile = capturedUri.getPath();
+                Log.i(TAG, "intent = null, file: " + selectedFile);
+            } else {
+                Uri selectedUri = data.getData();
+                selectedFile = FileUtils.getPath(this, selectedUri);
+                Log.i(TAG, "file: " + selectedFile);
+            }
+
             if (requestCode == REQUEST_VIDEO_METADATA) {
                 startMetadataActivity(selectedFile);
+            } else if (requestCode == REQUEST_IMAGE_CAPTURE) {
+                new ImageCompressAsyncTask(this).execute(selectedFile, new File(Environment.getExternalStorageDirectory(), "MaterialCamera").getAbsolutePath());
+            } else if (requestCode == REQUEST_VIDEO_CAPTURE) {
+                Log.d(TAG, "activity result video capture uri: " + selectedFile);
             } else if (requestCode == REQUEST_IMAGE_GALLERY) {
                 /**Do Image Compression**/
                 new ImageCompressAsyncTask(this).execute(selectedFile, new File(Environment.getExternalStorageDirectory(), "MaterialCamera").getAbsolutePath());
@@ -195,13 +285,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         Toast.LENGTH_LONG)
                         .show();
             }
-        } else if (data != null) {
+        } else if (data != null)
+
+        {
             Exception e = (Exception) data.getSerializableExtra(MaterialCamera.ERROR_EXTRA);
             if (e != null) {
                 e.printStackTrace();
                 Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
             }
-        } else {
+        } else
+
+        {
             Log.e(TAG, "FAILED ma friend");
         }
     }
