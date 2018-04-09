@@ -49,6 +49,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private static final int TYPE_IMAGE = 10;
     private static final int TYPE_VIDEO = 20;
+    private static final String EXTRA_VIDEO_URI = "EXTRA_VIDEO_URI";
 
     Uri capturedUri;
 
@@ -100,12 +101,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         if (view.getId() == R.id.takePhoto) {
-            takePhotoIntent();
+            dispatchTakePictureIntent();
             return;
         }
 
         if (view.getId() == R.id.takeVideo) {
-            takeVideoIntent();
+            dispatchTakeVideoIntent();
             return;
         }
 
@@ -162,7 +163,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         materialCamera.start(CAMERA_RQ);
     }
 
-    private void takePhotoIntent() {
+    /**
+     * Call Native Camera app to take a picture
+     * create a image type file (.jpg) and add a content:// URI from the file created to the intent
+     **/
+    private void dispatchTakePictureIntent() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
 
@@ -177,19 +182,36 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             //Continue only if photo file was sucessuflly created
             if (photoFile != null) {
+                capturedUri = Uri.fromFile(photoFile);
                 String authority = "com.afollestad.materialcamerasample.file_provider";
                 Uri photoURI = FileProvider.getUriForFile(this, authority, photoFile);
-                capturedUri = Uri.fromFile(photoFile);
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
                 startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
             }
         }
     }
 
-    private void takeVideoIntent() {
+    /**
+     * Call Native Camera app to record a video
+     * create a video type file (.mp4) and add a content:// URI from the file created to the intent
+     **/
+    private void dispatchTakeVideoIntent() {
         Intent takeVideoIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
         if (takeVideoIntent.resolveActivity(getPackageManager()) != null) {
-            startActivityForResult(takeVideoIntent, REQUEST_VIDEO_CAPTURE);
+            File videoFile = null;
+            try {
+                videoFile = createMediaFile(TYPE_VIDEO);
+            } catch (IOException ex) {
+                Log.e(TAG, "IOException " + ex.getMessage());
+            }
+            if (videoFile != null) {
+                capturedUri = Uri.fromFile(videoFile);
+                String authority = "com.afollestad.materialcamerasample.file_provider";
+                Uri videoURI = FileProvider.getUriForFile(this, authority, videoFile);
+                takeVideoIntent.putExtra(MediaStore.EXTRA_OUTPUT, videoURI);
+                takeVideoIntent.putExtra(MediaStore.EXTRA_DURATION_LIMIT, 30);
+                startActivityForResult(takeVideoIntent, REQUEST_VIDEO_CAPTURE);
+            }
         }
     }
 
@@ -197,19 +219,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String fileName = type == TYPE_IMAGE ? IMAGE_FORMAT_NAME + timeStamp + "_" : VIDEO_FORMAT_NAME + timeStamp + "_";
         File storageDir = Environment.getExternalStoragePublicDirectory(type == TYPE_IMAGE ? Environment.DIRECTORY_PICTURES : Environment.DIRECTORY_MOVIES);
-        Log.d(TAG, "mediafile time: " + timeStamp);
-        Log.d(TAG, "mediafile name: " + fileName);
-        Log.d(TAG, "mediafile dir path: " + storageDir.getAbsolutePath());
 
-        File file = File.createTempFile(
-                fileName, type == TYPE_IMAGE ? IMAGE_SUFFIX : VIDEO_SUFFIX, storageDir);
+        File file = File.createTempFile(fileName, type == TYPE_IMAGE ? IMAGE_SUFFIX : VIDEO_SUFFIX, storageDir);
         Log.d(TAG, "created media file without data for now: " + file.getAbsolutePath());
         return file;
     }
 
     /**
      * @param view view
-     *             Select video file from Gallery
+     *             Select video/image file from Gallery
      **/
     private void pickFromGallery(View view, boolean isVideo, boolean isImage) {
         Intent intent = new Intent();
@@ -245,36 +263,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        Log.d(TAG, "resultcode : " + resultCode);
         if (resultCode == RESULT_OK) {
-            String selectedFile;
-            if (data == null || data.getData() == null) {
-                selectedFile = capturedUri.getPath();
-                Log.i(TAG, "intent = null, file: " + selectedFile);
-            } else {
-                Uri selectedUri = data.getData();
-                selectedFile = FileUtils.getPath(this, selectedUri);
-                Log.i(TAG, "file: " + selectedFile);
-            }
-
             if (requestCode == REQUEST_VIDEO_METADATA) {
-                startMetadataActivity(selectedFile);
+                startMetadataActivity(FileUtils.getPath(this, data.getData()));
             } else if (requestCode == REQUEST_IMAGE_CAPTURE) {
-                new ImageCompressAsyncTask(this).execute(selectedFile, new File(Environment.getExternalStorageDirectory(), "MaterialCamera").getAbsolutePath());
+                String photoFilePath = capturedUri.getPath();
+                new ImageCompressAsyncTask(this).execute(photoFilePath, new File(Environment.getExternalStorageDirectory(), "MaterialCamera").getAbsolutePath());
             } else if (requestCode == REQUEST_VIDEO_CAPTURE) {
-                Log.d(TAG, "activity result video capture uri: " + selectedFile);
+                String videoFilePath = capturedUri.getPath();
+                Log.d(TAG, "activity result video capture uri: " + videoFilePath);
+                startTrimActivity(videoFilePath);
             } else if (requestCode == REQUEST_IMAGE_GALLERY) {
                 /**Do Image Compression**/
-                new ImageCompressAsyncTask(this).execute(selectedFile, new File(Environment.getExternalStorageDirectory(), "MaterialCamera").getAbsolutePath());
+                new ImageCompressAsyncTask(this).execute(FileUtils.getPath(this, data.getData()), new File(Environment.getExternalStorageDirectory(), "MaterialCamera").getAbsolutePath());
 
             } else if (requestCode == REQUEST_VIDEO_GALLERY) {
                 /**Do compression
                  * Compressed video is been saved in Material Camera directory**/
                 Log.i("MAIN ACT", "before");
-                new VideoCompressAsyncTask(this).execute(selectedFile, new File(Environment.getExternalStorageDirectory(), "MaterialCamera").getAbsolutePath());
+                new VideoCompressAsyncTask(this).execute(FileUtils.getPath(this, data.getData()), new File(Environment.getExternalStorageDirectory(), "MaterialCamera").getAbsolutePath());
 
                 Log.i("MAIN ACTIVITY", "after video compress async task");
             } else if (requestCode == REQUEST_VIDEO_TRIMMER) {
-                startTrimActivity(selectedFile);
+                startTrimActivity(FileUtils.getPath(this, data.getData()));
             }
             // Received recording or error from MaterialCamera
             else if (requestCode == CAMERA_RQ) {

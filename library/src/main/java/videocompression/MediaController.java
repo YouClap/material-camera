@@ -13,9 +13,6 @@ import android.media.MediaMetadataRetriever;
 import android.os.Build;
 import android.util.Log;
 
-import com.googlecode.mp4parser.authoring.builder.DefaultMp4Builder;
-import com.googlecode.mp4parser.authoring.builder.Mp4Builder;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;

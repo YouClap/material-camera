@@ -21,8 +21,10 @@ import life.knowledge4.videotrimmer.interfaces.OnTrimVideoListener;
 public class TrimmerActivity extends AppCompatActivity implements OnTrimVideoListener, OnK4LVideoListener {
 
     private K4LVideoTrimmer mVideoTrimmer;
+    static final String EXTRA_VIDEO_URI = "EXTRA_VIDEO_URI";
     static final String EXTRA_VIDEO_PATH = "EXTRA_VIDEO_PATH";
     private ProgressDialog mProgressDialog;
+    String path = "";
 
 
     @Override
@@ -31,7 +33,6 @@ public class TrimmerActivity extends AppCompatActivity implements OnTrimVideoLis
         setContentView(com.afollestad.materialcamerasample.R.layout.activity_trimmer);
 
         Intent extraIntent = getIntent();
-        String path = "";
         if (extraIntent != null) {
             path = extraIntent.getStringExtra(EXTRA_VIDEO_PATH);
             Log.i("TRIMMER", path);
@@ -71,19 +72,10 @@ public class TrimmerActivity extends AppCompatActivity implements OnTrimVideoLis
         Log.i("TRIMMER", "pressed save button");
         Log.i("TRIMMER", "st: " + startTime + ", et: " + endTime);
         Log.i("TRIMMER", "uri: " + uri);
-        Log.i("TRIMMER", "uri: " + uri.getPath());
+        Log.i("TRIMMER", "path: " + path);
 
-        new MainActivity.VideoCompressAsyncTask(this, startTime, endTime).execute(uri.getPath(), new File(Environment.getExternalStorageDirectory(), "MaterialCamera").getAbsolutePath());
-
-        /*runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Toast.makeText(TrimmerActivity.this, "Video saved at " + uri.getPath(), Toast.LENGTH_SHORT).show();
-            }
-        });*/
-        //Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-        //intent.setDataAndType(uri, "video/mp4");
-        //startActivity(intent);
+        //new MainActivity.VideoCompressAsyncTask(this, startTime, endTime).execute(uri.getPath(), new File(Environment.getExternalStorageDirectory(), "MaterialCamera").getAbsolutePath());
+        new MainActivity.VideoCompressAsyncTask(this, startTime, endTime).execute(path, new File(Environment.getExternalStorageDirectory(), "MaterialCamera").getAbsolutePath());
         finish();
     }
 
